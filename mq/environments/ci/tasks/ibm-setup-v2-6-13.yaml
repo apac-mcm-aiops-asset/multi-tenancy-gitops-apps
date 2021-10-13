@@ -279,6 +279,9 @@ spec:
 
         for f in /tekton/results/*; do echo "results.$(basename $f)=$(cat $f)"; done
     - name: detect-secrets
+      env:
+        - name: DETECT_SECRETS_STRICT_MODE
+          value: "False"
       image: ibmcom/detect-secrets:dss-188-id-237292801-time-1631197167
       workingDir: $(params.source-dir)
       script: |
@@ -288,6 +291,8 @@ spec:
         import json
         import os
         import sys
+
+        detect_mode = os.getenv("DETECT_SECRETS_STRICT_MODE")
 
         print('Running detect-secrets ...')
         print(subprocess.run(
@@ -309,8 +314,11 @@ spec:
             print('FOUND SECRETS:')
             for secret in found_secrets:
                 print('File: ' + secret[0] + ' Line: ' + str(secret[1]['line_number']) + ' Type: ' + secret[1]['type'])  # noqa: E501
-            print('Detect Secrets Failure.')
-            sys.exit(1)
+            if detect_mode == "True":
+                print('\nERROR: Detect Secrets Failure.')
+                sys.exit(1)
+            else:
+                print("\nWARNING: the step exits successfully with above issue due to the environment variable DETECT_SECRETS_STRICT_MODE is not True.")
         else:
             print('NO SECRETS FOUND')
             print('Detect Secrets Success')
