@@ -38,11 +38,23 @@ spec:
           value: $(params.git-revision)
         - name: scan-image
           value: $(params.scan-image)
+    - name: detect-secrets
+      taskRef:
+        name: ibm-detect-secrets-v2-6-13
+      runAfter:
+        - setup
+      params:
+        - name: git-url
+          value: "$(tasks.setup.results.git-url)"
+        - name: git-revision
+          value: "$(tasks.setup.results.git-revision)"
+        - name: source-dir
+          value: "$(tasks.setup.results.source-dir)"
     - name: test
       taskRef:
         name: ibm-java-maven-test-v2-6-13
       runAfter:
-        - setup
+        - detect-secrets
       params:
         - name: git-url
           value: "$(tasks.setup.results.git-url)"
